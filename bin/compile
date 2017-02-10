@@ -5,67 +5,84 @@ status() {
   echo "-----> $*"
 }
 
-set -e          # fail fast
-set -o pipefail # don't ignore exit codes when piping output
+set -e            # fail fast
+set -o errexit    # always exit on error
+set -o pipefail   # don't ignore exit codes when piping output
+unset GIT_DIR     # Avoid GIT_DIR leak from previous build step
 
 build_dir=$1
 cache_dir=$2
 env_dir=$3
 
 # Versions
-NGINX_VERSION=1.11.3
-MRUBY_VERSION=v1.18.3
+NGINX_VERSION=1.11.9
+LUAJIT_VERSION=2.0.4
+NGX_DEVEL_KIT_VERSION=0.3.0
+NGX_MODULE_VERSION=0.10.7
 
 # Download URLs
 nginx_tarball_url=http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
-mruby_github_url=https://github.com/matsumoto-r/ngx_mruby
+jit_tarball_url=http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz
+ngx_devel_kit_url=https://github.com/simpl/ngx_devel_kit/archive/v${NGX_DEVEL_KIT_VERSION}.tar.gz
+ngx_module_url=https://github.com/openresty/lua-nginx-module/archive/v${NGX_MODULE_VERSION}.tar.gz
 
 # Build paths
-cache=$cache_dir/build/nginx-with-mruby/${NGINX_VERSION}-mruby-${MRUBY_VERSION}
+cache=$cache_dir/build/nginx-with-lua/${NGINX_VERSION}-lua-${LUAJIT_VERSION}
 build=${BUILD_PREFIX}/app/nginx
-src=${PWD}/nginx-${NGINX_VERSION}
-mruby_src=${PWD}/ngx_mruby
-
+build_lua=${BUILD_PREFIX}/app/luajit
 mkdir -p $build
+mkdir -p $build_lua
 
 if [ -e $cache ]; then
-# Use cached nginx
+  # Use cached nginx
   status "Using previously compiled nginx-$NGINX_VERSION"
   cp -R $cache/nginx/* $build
+  cp -R $cache/luajit/* $build_lua
 else
   status "Downloading $nginx_tarball_url"
   curl -L $nginx_tarball_url | tar xz
 
-  status "Downloading MRuby ${MRUBY_VERSION}"
-  if [ -d "$mruby_src" ]; then
-    rm -rf ${mruby_src}
-  fi
+  status "Downloading $jit_tarball_url"
+  curl -L $jit_tarball_url | tar xz
 
-  git clone $mruby_github_url
-  pushd ${mruby_src}
-  git checkout $MRUBY_VERSION
+  status "Downloading $ngx_devel_kit_url"
+  curl -L $ngx_devel_kit_url | tar xz
+
+  status "Downloading $ngx_module_url"
+  curl -L $ngx_module_url | tar xz
+
+  status "Building LuaJIT"
+  pushd LuaJIT-${LUAJIT_VERSION}
+    make PREFIX=$build_lua install 
   popd
 
-  status "Compiling MRuby"
-  cp ./mruby_build_config.rb $mruby_src/build_config.rb
-  pushd ${mruby_src}
-  ./configure --with-ngx-src-root=${src}
-  make build_mruby
-  popd
+  status "Building nginx"
+  pushd nginx-${NGINX_VERSION}
+    export LUAJIT_LIB=${build_lua}/lib
+    export LUAJIT_INC=${build_lua}/include/luajit-2.0
 
-  status "Compiling nginx"
-  pushd $src
-  ./configure --prefix=$build --with-ipv6 --with-http_stub_status_module --with-http_realip_module --with-http_ssl_module --add-module=${mruby_src} --add-module=${mruby_src}/dependence/ngx_devel_kit $NGINX_OPTIONS
-  make install --silent
+    ./configure \
+      --prefix=$build \
+      --with-http_stub_status_module \
+      --with-http_realip_module \
+      --with-http_ssl_module \
+      --with-ld-opt="-Wl,-rpath,${LUAJIT_LIB}" \
+      --add-module=../ngx_devel_kit-${NGX_DEVEL_KIT_VERSION} \
+      --add-module=../lua-nginx-module-${NGX_MODULE_VERSION}
+
+    make install --silent
+  popd
 
   # Clear out cache if our version doesn't exist
   status "Caching build"
   rm -rf $cache_dir/*
   mkdir -p $cache
   cp -R $build $cache
+  cp -R $build_lua $cache
 fi
 
 mv $build $build_dir
+mv $build_lua $build_dir
 
 # Add to PATH
 mkdir -p $build_dir/.profile.d

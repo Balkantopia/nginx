@@ -1,27 +1,15 @@
 # nginx buildpack for Heroku
 
-This buildpack allows you to run nginx on a Heroku dyno.
-
-It has been powering [General Assembly's website](https://generalassemb.ly/) for several years.
-
+This buildpack allows you to run nginx (w/lua module) on a Heroku dyno.
 
 ## Features
 
-* Downloads and builds nginx 1.11.3 from source
-* Downloads and builds MRuby 1.18.3 from source
-* Builds nginx with SSL, PCRE, and MRuby extensions
+* Downloads and builds nginx 1.11.9 from source
+* Downloads and builds LuaJIT 2.0.4 from source
+* Builds nginx with SSL, PCRE, and Lua extensions
 * Caches all builds for lightning-fast deploys
 
 Note: SSL and PCRE packages are [already available](https://devcenter.heroku.com/articles/cedar-ubuntu-packages) on Heroku, so they don't need to be downloaded before building nginx.
-
-
-## MRuby
-
-MRuby is a lightweight version of Ruby optimized for use in embedded systems. The `ngx_mruby` module lets you use Ruby as an alternative to Lua for introducing dynamic scripting to nginx.
-
-This blog post offers a taste of what you can do with MRuby in nginx:
-http://hokstadconsulting.com/nginx/mruby-virtualhosts
-
 
 ## Using this buildpack
 
