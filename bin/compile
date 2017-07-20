@@ -19,12 +19,16 @@ NGINX_VERSION=1.11.9
 LUAJIT_VERSION=2.0.4
 NGX_DEVEL_KIT_VERSION=0.3.0
 NGX_MODULE_VERSION=0.10.7
+SET_MISC_MODULE_VERSION=0.31
+MORE_HEADERS_MODULE_VERSION=0.32
 
 # Download URLs
 nginx_tarball_url=http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
 jit_tarball_url=http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz
 ngx_devel_kit_url=https://github.com/simpl/ngx_devel_kit/archive/v${NGX_DEVEL_KIT_VERSION}.tar.gz
 ngx_module_url=https://github.com/openresty/lua-nginx-module/archive/v${NGX_MODULE_VERSION}.tar.gz
+set_misc_module_url=https://github.com/openresty/set-misc-nginx-module/archive/v${SET_MISC_MODULE_VERSION}.tar.gz
+more_headers_module_url=https://github.com/openresty/headers-more-nginx-module/archive/v${MORE_HEADERS_MODULE_VERSION}.tar.gz
 
 # Build paths
 cache=$cache_dir/build/nginx-with-lua/${NGINX_VERSION}-lua-${LUAJIT_VERSION}
@@ -51,9 +55,15 @@ else
   status "Downloading $ngx_module_url"
   curl -L $ngx_module_url | tar xz
 
+  status "Downloading $set-misc-nginx-module"
+  curl -L $set_misc_module_url | tar xz
+
+  status "Downloading $more_headers_module_url"
+  curl -L $more_headers_module_url | tar xz
+
   status "Building LuaJIT"
   pushd LuaJIT-${LUAJIT_VERSION}
-    make PREFIX=$build_lua install 
+    make PREFIX=$build_lua install
   popd
 
   status "Building nginx"
@@ -68,7 +78,9 @@ else
       --with-http_ssl_module \
       --with-ld-opt="-Wl,-rpath,${LUAJIT_LIB}" \
       --add-module=../ngx_devel_kit-${NGX_DEVEL_KIT_VERSION} \
-      --add-module=../lua-nginx-module-${NGX_MODULE_VERSION}
+      --add-module=../lua-nginx-module-${NGX_MODULE_VERSION} \
+      --add-module=../set-misc-nginx-module-${SET_MISC_MODULE_VERSION} \
+      --add-module=../headers-more-nginx-module-${MORE_HEADERS_MODULE_VERSION}
 
     make install --silent
   popd
