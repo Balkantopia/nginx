@@ -24,7 +24,7 @@ MORE_HEADERS_MODULE_VERSION=0.33
 
 # Download URLs
 nginx_tarball_url=https://openresty.org/download/openresty-1.19.3.1.tar.gz
-jit_tarball_url=https://github.com/openresty/luajit2/archive/v2.1-20201229.tar.gz
+jit_tarball_url=http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz
 ngx_devel_kit_url=https://github.com/simpl/ngx_devel_kit/archive/v${NGX_DEVEL_KIT_VERSION}.tar.gz
 ngx_module_url=https://github.com/openresty/lua-nginx-module/archive/v${NGX_MODULE_VERSION}.tar.gz
 set_misc_module_url=https://github.com/openresty/set-misc-nginx-module/archive/v${SET_MISC_MODULE_VERSION}.tar.gz
@@ -57,14 +57,14 @@ mkdir -p $build_lua
   curl -L $more_headers_module_url | tar xz
 
   status "Building LuaJIT"
-  pushd luajit2-2.1-20201229
+  pushd LuaJIT-${LUAJIT_VERSION}
     make PREFIX=$build_lua install
   popd
 
   status "Building nginx"
   pushd openresty-1.19.3.1
     export LUAJIT_LIB=$build_lua/lib
-    export LUAJIT_INC=$build_lua/include/luajit-2.1
+    export LUAJIT_INC=$build_lua/include/luajit-2.0
 
     ./configure \
       --prefix=$build \
