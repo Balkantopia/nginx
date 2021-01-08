@@ -37,12 +37,7 @@ build_lua=${BUILD_PREFIX}/app/luajit
 mkdir -p $build
 mkdir -p $build_lua
 
-if [ -e $cache ]; then
-  # Use cached nginx
-  status "Using previously compiled nginx-$NGINX_VERSION"
-  cp -R $cache/nginx/* $build
-  cp -R $cache/luajit/* $build_lua
-else
+  rm -rf $cache/*
   status "Downloading $nginx_tarball_url"
   curl -L $nginx_tarball_url | tar xz
 
