@@ -57,7 +57,7 @@ mkdir -p $build_lua
   curl -L $more_headers_module_url | tar xz
 
   status "Building LuaJIT"
-  pushd LuaJIT-${LUAJIT_VERSION}
+  pushd luajit2-2.1-20201229
     make PREFIX=$build_lua install
   popd
 
