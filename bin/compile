@@ -86,7 +86,7 @@ mkdir -p $build_lua
   mkdir -p $cache
   cp -R $build $cache
   cp -R $build_lua $cache
-fi
+
 
 mv $build $build_dir
 mv $build_lua $build_dir
